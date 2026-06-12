@@ -64,7 +64,9 @@ impl SqliteStore {
             "#,
             self.table_name
         );
-        sqlx::query(&query).execute(&self.pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(query))
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 
@@ -80,7 +82,7 @@ impl SqliteStore {
             "#,
             table_name = self.table_name
         );
-        let res = sqlx::query(&query)
+        let res = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(record.id.to_string())
             .bind(rmp_serde::to_vec(record).map_err(SqlxStoreError::Encode)?)
             .bind(record.expiry_date)
@@ -109,7 +111,7 @@ impl SqliteStore {
             "#,
             table_name = self.table_name
         );
-        sqlx::query(&query)
+        sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(record.id.to_string())
             .bind(rmp_serde::to_vec(record).map_err(SqlxStoreError::Encode)?)
             .bind(record.expiry_date)
@@ -131,7 +133,7 @@ impl ExpiredDeletion for SqliteStore {
             "#,
             table_name = self.table_name
         );
-        sqlx::query(&query)
+        sqlx::query(sqlx::AssertSqlSafe(query))
             .execute(&self.pool)
             .await
             .map_err(SqlxStoreError::Sqlx)?;
@@ -166,7 +168,7 @@ impl SessionStore for SqliteStore {
             "#,
             self.table_name
         );
-        let data: Option<(Vec<u8>,)> = sqlx::query_as(&query)
+        let data: Option<(Vec<u8>,)> = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(session_id.to_string())
             .bind(OffsetDateTime::now_utc())
             .fetch_optional(&self.pool)
@@ -189,7 +191,7 @@ impl SessionStore for SqliteStore {
             "#,
             self.table_name
         );
-        sqlx::query(&query)
+        sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(session_id.to_string())
             .execute(&self.pool)
             .await
